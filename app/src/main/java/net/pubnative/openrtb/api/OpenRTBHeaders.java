@@ -1,6 +1,6 @@
 package net.pubnative.openrtb.api;
 
-public class OpenRTBHeaders {
+public final class OpenRTBHeaders {
     public static final class Names {
         public static final String CONTENT_TYPE = "Content-Type";
         public static final String ACCEPT_ENCODING = "Accept-Encoding";
