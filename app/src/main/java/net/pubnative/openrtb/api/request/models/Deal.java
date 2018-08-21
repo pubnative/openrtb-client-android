@@ -3,11 +3,11 @@ package net.pubnative.openrtb.api.request.models;
 import java.util.List;
 
 public class Deal {
-    private String id;
-    private float bidfloor = 0;
-    private String bidfloorcur = "USD";
-    private int at;
-    private List<String> wseat;
-    private List<String> wadomain;
-    private Object ext;
+    public String id;
+    public float bidfloor = 0;
+    public String bidfloorcur = "USD";
+    public int at;
+    public List<String> wseat;
+    public List<String> wadomain;
+    //public Object ext;
 }

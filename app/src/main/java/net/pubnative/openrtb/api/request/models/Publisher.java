@@ -3,9 +3,9 @@ package net.pubnative.openrtb.api.request.models;
 import java.util.List;
 
 public class Publisher {
-    private String id;
-    private String name;
-    private List<String> cat;
-    private String domain;
-    private Object ext;
+    public String id;
+    public String name;
+    public List<String> cat;
+    public String domain;
+    //public Object ext;
 }

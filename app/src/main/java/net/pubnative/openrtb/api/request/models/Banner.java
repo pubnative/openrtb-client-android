@@ -3,25 +3,25 @@ package net.pubnative.openrtb.api.request.models;
 import java.util.List;
 
 public class Banner {
-    private List<Format> format;
-    private int w;
-    private int h;
+    public List<Format> format;
+    public int w;
+    public int h;
     @Deprecated
-    private int wmax;
+    public int wmax;
     @Deprecated
-    private int hmax;
+    public int hmax;
     @Deprecated
-    private int wmin;
+    public int wmin;
     @Deprecated
-    private int hmin;
-    private List<Integer> btype;
-    private List<Integer> battr;
-    private int pos;
-    private List<String> mimes;
-    private int topframe;
-    private List<Integer> expdir;
-    private List<Integer> api;
-    private String id;
-    private int vcm;
-    private Object ext;
+    public int hmin;
+    public List<Integer> btype;
+    public List<Integer> battr;
+    public int pos;
+    public List<String> mimes;
+    public int topframe;
+    public List<Integer> expdir;
+    public List<Integer> api;
+    public String id;
+    public int vcm;
+    //public Object ext;
 }
