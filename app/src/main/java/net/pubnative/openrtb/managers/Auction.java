@@ -26,7 +26,7 @@ public class Auction {
     private final UserInfoProvider mUserInfoProvider;
 
     private AuctionResponse mAuctionResponse;
-    private List<>
+    private List<BidResponse> mLoserBids;
 
     public Auction() {
         this(new AppInfoProvider(),
