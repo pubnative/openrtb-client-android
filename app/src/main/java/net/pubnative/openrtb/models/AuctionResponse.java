@@ -8,9 +8,14 @@ import java.util.List;
 
 public class AuctionResponse {
     private final List<BidResponse> mList;
+
     public AuctionResponse(BidResponse... responses) {
         this.mList = new ArrayList<>(responses.length);
 
         Collections.addAll(mList, responses);
+    }
+
+    public List<BidResponse> getList() {
+        return mList;
     }
 }

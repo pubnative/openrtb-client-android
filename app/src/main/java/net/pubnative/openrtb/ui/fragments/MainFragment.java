@@ -9,12 +9,13 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import net.pubnative.openrtb.R;
+import net.pubnative.openrtb.api.response.models.Bid;
 import net.pubnative.openrtb.managers.Auction;
 
 /**
  * A placeholder fragment containing a simple view.
  */
-public class MainFragment extends Fragment {
+public class MainFragment extends Fragment implements Auction.AuctionListener {
     private static final String TAG = MainFragment.class.getSimpleName();
 
     public MainFragment() {
@@ -39,7 +40,19 @@ public class MainFragment extends Fragment {
     }
 
     private void doRequest() {
-        Auction auction = new Auction();
+        Auction auction = new Auction(this);
         auction.start();
+    }
+
+
+    // Auction callback
+    @Override
+    public void onSuccess(Bid bid) {
+
+    }
+
+    @Override
+    public void onFailed(Throwable throwable) {
+
     }
 }

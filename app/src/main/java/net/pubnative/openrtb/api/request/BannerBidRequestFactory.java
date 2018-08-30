@@ -37,7 +37,7 @@ public class BannerBidRequestFactory {
         bidRequest.user = user;
 
         bidRequest.at = 2;
-        bidRequest.tmax = 100;
+        bidRequest.tmax = 4500;
         bidRequest.allimps = 0;
 
         List<String> cur = new ArrayList<>(1);

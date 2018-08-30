@@ -2,7 +2,9 @@ package net.pubnative.openrtb.managers;
 
 import net.pubnative.openrtb.api.request.BannerBidRequestFactory;
 import net.pubnative.openrtb.api.request.models.BidRequest;
+import net.pubnative.openrtb.api.response.models.Bid;
 import net.pubnative.openrtb.api.response.models.BidResponse;
+import net.pubnative.openrtb.api.response.models.SeatBid;
 import net.pubnative.openrtb.models.AuctionResponse;
 import net.pubnative.openrtb.providers.AppInfoProvider;
 import net.pubnative.openrtb.providers.DeviceInfoProvider;
@@ -21,22 +23,32 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 
 public class Auction {
+    public interface AuctionListener {
+        void onSuccess(Bid bid);
+        void onFailed(Throwable throwable);
+    }
+
     private final AppInfoProvider mAppInfoProvider;
     private final DeviceInfoProvider mDeviceInfoProvider;
     private final UserInfoProvider mUserInfoProvider;
 
-    private AuctionResponse mAuctionResponse;
+    private final AuctionListener mListener;
+
+    private BidResponse mWinnerBid;
     private List<BidResponse> mLoserBids;
 
-    public Auction() {
-        this(new AppInfoProvider(),
+    public Auction(AuctionListener listener) {
+        this(listener,
+                new AppInfoProvider(),
                 new DeviceInfoProvider(),
                 new UserInfoProvider());
     }
 
-    public Auction(AppInfoProvider appInfoProvider,
+    public Auction(AuctionListener listener,
+                   AppInfoProvider appInfoProvider,
                    DeviceInfoProvider deviceInfoProvider,
                    UserInfoProvider userInfoProvider) {
+        this.mListener = listener;
         this.mAppInfoProvider = appInfoProvider;
         this.mDeviceInfoProvider = deviceInfoProvider;
         this.mUserInfoProvider = userInfoProvider;
@@ -63,34 +75,58 @@ public class Auction {
                 .observeOn(AndroidSchedulers.mainThread())
                 .timeout(5, TimeUnit.SECONDS)
                 .subscribe(new SingleObserver<AuctionResponse>() {
-            @Override
-            public void onSubscribe(Disposable d) {
+                    @Override
+                    public void onSubscribe(Disposable d) {
 
-            }
+                    }
 
-            @Override
-            public void onSuccess(AuctionResponse auctionResponse) {
+                    @Override
+                    public void onSuccess(AuctionResponse auctionResponse) {
+                        doAuction(auctionResponse);
+                    }
 
-            }
-
-            @Override
-            public void onError(Throwable e) {
-
-            }
-        });
+                    @Override
+                    public void onError(Throwable e) {
+                        if (mListener != null) {
+                            mListener.onFailed(e);
+                        }
+                    }
+                });
     }
 
     private void doAuction(AuctionResponse auctionResponse) {
-        BidResponse winner = chooseWinner(auctionResponse);
-        List<BidResponse> losers = getLosers(auctionResponse, winner);
-    }
+        if (auctionResponse != null && !auctionResponse.getList().isEmpty()) {
+            float winningBid = 0;
+            Bid winner = null;
+            List<Bid> losers = new ArrayList<>();
 
-    private BidResponse chooseWinner(AuctionResponse auctionResponse) {
+            for (BidResponse response : auctionResponse.getList()) {
+                for (SeatBid seatBid: response.seatbid) {
+                    for (Bid bid: seatBid.bid) {
+                        if (bid.price > winningBid) {
+                            winningBid = bid.price;
 
-    }
+                            if (winner != null) {
+                                losers.add(winner);
+                            }
 
-    private List<BidResponse> getLosers(AuctionResponse auctionResponse, BidResponse winner) {
-        List<BidResponse> list = new ArrayList<>();
-        return list;
+                            winner = bid;
+                        } else {
+                            losers.add(bid);
+                        }
+                    }
+                }
+            }
+
+            if (winner != null) {
+                if (mListener != null) {
+                    mListener.onSuccess(winner);
+                }
+            } else {
+                if (mListener != null) {
+                    mListener.onFailed(new Exception("No bid"));
+                }
+            }
+        }
     }
 }
