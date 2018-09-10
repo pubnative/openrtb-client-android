@@ -15,3 +15,4 @@ This sample application contains a prototype of an OpenRTB client according to t
 * Dynamically fill all values from the BidRequest object (currently many of them are hardcoded)
 * Enhance the auction logic to something similar to what occurs on the server side
 * Support all formats on the demo app. Currently only format in the demo is Standard MRect
+* Download configuration or logic from the server to get all bidders
