@@ -12,17 +12,19 @@ public class OpenRTB {
     private static UserInfoProvider sUserInfoProvider;
 
     public static void init(Context context) {
-        init(context,
+        init(
                 new AppInfoProvider(context),
                 new DeviceInfoProvider(context),
                 new UserInfoProvider(context));
     }
 
-    static void init(Context context,
-                            AppInfoProvider appInfoProvider,
-                            DeviceInfoProvider deviceInfoProvider,
-                            UserInfoProvider userInfoProvider) {
-
+    static void init(
+            AppInfoProvider appInfoProvider,
+            DeviceInfoProvider deviceInfoProvider,
+            UserInfoProvider userInfoProvider) {
+        sAppInfoProvider = appInfoProvider;
+        sDeviceInfoProvider = deviceInfoProvider;
+        sUserInfoProvider = userInfoProvider;
     }
 
     public static AppInfoProvider getAppInfoProvider() {

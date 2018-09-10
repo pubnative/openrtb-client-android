@@ -12,6 +12,7 @@ import net.pubnative.openrtb.api.response.models.BidResponse;
 import net.pubnative.openrtb.api.response.models.SeatBid;
 import net.pubnative.openrtb.models.AuctionResponse;
 import net.pubnative.openrtb.providers.AppInfoProvider;
+import net.pubnative.openrtb.providers.BiddersProvider;
 import net.pubnative.openrtb.providers.DeviceInfoProvider;
 import net.pubnative.openrtb.providers.UserInfoProvider;
 import net.pubnative.openrtb.utils.HttpRequest;
@@ -75,11 +76,9 @@ public class Auction {
     public void start(float bidFloor) {
         BidRequest bidRequest = createBidRequest(bidFloor);
 
-        PNRTBService pnrtbService = ServiceProvider.getInstance().getPNRTBService();
-        Single<BidResponse> bidSource1 = pnrtbService.getBid("dde3c298b47648459f8ada4a982fa92d", "2", bidRequest);
-        Single<BidResponse> bidSource2 = pnrtbService.getBid("dde3c298b47648459f8ada4a982fa92d", "7", bidRequest);
+        BiddersProvider biddersProvider = new BiddersProvider();
 
-        Single<AuctionResponse> auctionResponseSource = Single.zip(bidSource1, bidSource2, AuctionResponse::new);
+        Single<AuctionResponse> auctionResponseSource = biddersProvider.getAuctionResponseSource(bidRequest);
 
         auctionResponseSource
                 .subscribeOn(Schedulers.io())
