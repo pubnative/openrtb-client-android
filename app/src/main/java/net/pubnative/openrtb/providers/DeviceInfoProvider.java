@@ -1,18 +1,51 @@
 package net.pubnative.openrtb.providers;
 
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.os.Build;
+import android.provider.Settings;
+import android.text.TextUtils;
+
 import net.pubnative.openrtb.api.attributes.ConnectionType;
 import net.pubnative.openrtb.api.attributes.DeviceType;
 import net.pubnative.openrtb.api.request.models.Device;
+import net.pubnative.openrtb.utils.PNAdvertisingIdClient;
 
 public class DeviceInfoProvider {
     private final GeoProvider mGeoProvider;
 
-    public DeviceInfoProvider() {
-        this(new GeoProvider());
+    private String userAgent;
+    private String ip;
+    private String carrier;
+    private String language;
+    private String model;
+    private String os;
+    private String osVersion;
+    private int connectionType;
+    private int deviceType;
+    private String ifa;
+
+    private boolean mLimitTracking = false;
+
+    public DeviceInfoProvider(Context context) {
+        this(context, new GeoProvider(context));
     }
 
-    public DeviceInfoProvider(GeoProvider geoProvider) {
+    public DeviceInfoProvider(Context context, GeoProvider geoProvider) {
         this.mGeoProvider = geoProvider;
+
+        this.userAgent = "Dalvik/2.1.0 (Linux; U; Android 6.0; MotoG3 Build/MPI24.65-25)";
+        this.ip = "107.219.186.28";
+        this.carrier = "att internet services";
+        this.language = context.getResources().getConfiguration().locale.getLanguage();
+        this.model = Build.MODEL;
+        this.os = "Android";
+        this.osVersion = Build.VERSION.RELEASE;
+        this.connectionType = ConnectionType.WIFI;
+        this.deviceType = DeviceType.MOBILE_TABLET;
+        this.ifa = "";
+
+        fetchAdvertisingId(context);
     }
 
     public Device getDevice() {
@@ -27,46 +60,73 @@ public class DeviceInfoProvider {
         device.osv = getOSVersion();
         device.connectiontype = getConnectionType();
         device.devicetype = getDeviceType();
+        device.ifa = getIFA();
         return device;
     }
 
     private String getUserAgent() {
-        return "Dalvik/2.1.0 (Linux; U; Android 6.0; MotoG3 Build/MPI24.65-25)";
+        return userAgent;
     }
 
     private String getIp() {
-        return "107.219.186.28";
+        return userAgent;
     }
 
     private String getCarrier() {
-        return "att internet services";
+        return carrier;
     }
 
     private String getLanguage() {
-        return "en";
+        return language;
     }
 
     private String getModel() {
-        return "Moto G3";
+        return model;
     }
 
     private String getOS() {
-        return "Android";
+        return os;
     }
 
     private String getOSVersion() {
-        return "6.0";
+        return osVersion;
     }
 
     private int getConnectionType() {
-        return ConnectionType.WIFI;
+        return connectionType;
     }
 
     private int getDeviceType() {
-        return DeviceType.MOBILE_TABLET;
+        return deviceType;
     }
 
     private String getIFA() {
-        return "03F9F0E4-937D-4F85-9275-F530E0107B2F";
+        return ifa;
+    }
+
+    public boolean limitTracking() {
+        return mLimitTracking;
+    }
+
+    /**
+     * Attempt to use the play services advertising ID, but fall back on the old style Android ID.
+     * https://developer.android.com/training/articles/user-data-ids.html
+     * https://support.google.com/googleplay/android-developer/answer/6048248?hl=en
+     * https://play.google.com/about/monetization-ads/ads/ad-id/
+     */
+    @SuppressLint("HardwareIds")
+    private void fetchAdvertisingId(Context context) {
+        PNAdvertisingIdClient client = new PNAdvertisingIdClient();
+        client.request(context, new PNAdvertisingIdClient.Listener() {
+            @Override
+            public void onPNAdvertisingIdFinish(String advertisingId, Boolean limitTracking) {
+                mLimitTracking = limitTracking;
+                if (TextUtils.isEmpty(advertisingId)) {
+                    ifa = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
+                } else {
+                    ifa = advertisingId;
+                }
+            }
+        });
     }
 }

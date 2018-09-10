@@ -6,5 +6,6 @@ public class OpenRTBApp extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        OpenRTB.init(this);
     }
 }

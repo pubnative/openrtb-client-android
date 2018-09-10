@@ -2,8 +2,8 @@ package net.pubnative.openrtb.managers;
 
 import android.content.Context;
 import android.text.TextUtils;
-import android.util.Log;
 
+import net.pubnative.openrtb.OpenRTB;
 import net.pubnative.openrtb.api.Macros;
 import net.pubnative.openrtb.api.request.BannerBidRequestFactory;
 import net.pubnative.openrtb.api.request.models.BidRequest;
@@ -35,6 +35,7 @@ public class Auction {
 
     public interface AuctionListener {
         void onSuccess(Bid bid, float auctionPrice);
+
         void onFailed(Throwable throwable);
     }
 
@@ -45,15 +46,12 @@ public class Auction {
     private final AuctionListener mListener;
     private final Context mContext;
 
-    private BidResponse mWinnerBid;
-    private List<BidResponse> mLoserBids;
-
     public Auction(Context context, AuctionListener listener) {
         this(context,
                 listener,
-                new AppInfoProvider(),
-                new DeviceInfoProvider(),
-                new UserInfoProvider());
+                OpenRTB.getAppInfoProvider(),
+                OpenRTB.getDeviceInfoProvider(),
+                OpenRTB.getUserInfoProvider());
     }
 
     public Auction(Context context, AuctionListener listener,
@@ -67,15 +65,15 @@ public class Auction {
         this.mUserInfoProvider = userInfoProvider;
     }
 
-    private BidRequest createBidRequest() {
+    private BidRequest createBidRequest(float bidFloor) {
         return new BannerBidRequestFactory().createBidRequest(
                 mAppInfoProvider.getApp(),
                 mDeviceInfoProvider.getDevice(),
-                mUserInfoProvider.getUser());
+                mUserInfoProvider.getUser(), bidFloor);
     }
 
-    public void start() {
-        BidRequest bidRequest = createBidRequest();
+    public void start(float bidFloor) {
+        BidRequest bidRequest = createBidRequest(bidFloor);
 
         PNRTBService pnrtbService = ServiceProvider.getInstance().getPNRTBService();
         Single<BidResponse> bidSource1 = pnrtbService.getBid("dde3c298b47648459f8ada4a982fa92d", "2", bidRequest);
@@ -114,8 +112,8 @@ public class Auction {
             List<Bid> losers = new ArrayList<>();
 
             for (BidResponse response : auctionResponse.getList()) {
-                for (SeatBid seatBid: response.seatbid) {
-                    for (Bid bid: seatBid.bid) {
+                for (SeatBid seatBid : response.seatbid) {
+                    for (Bid bid : seatBid.bid) {
                         if (bid.price > winningBid) {
                             winningBid = bid.price;
 
@@ -164,7 +162,7 @@ public class Auction {
 
     private void notifyLosers(List<Bid> losers, float auctionPrice) {
         if (losers != null) {
-            for (Bid loser: losers) {
+            for (Bid loser : losers) {
                 if (TextUtils.isEmpty(loser.lurl)) {
                     Logger.d(TAG, "Winning bid has no loss notice URL. Dropping call");
                 } else {

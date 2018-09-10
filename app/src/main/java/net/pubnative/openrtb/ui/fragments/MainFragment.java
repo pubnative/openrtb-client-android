@@ -55,13 +55,13 @@ public class MainFragment extends Fragment implements Auction.AuctionListener, M
 
     private void doRequest() {
         Auction auction = new Auction(getActivity(), this);
-        auction.start();
+        auction.start(0.01f);
     }
 
 
     // Auction callback
     @Override
-    public void onSuccess(Bid bid) {
+    public void onSuccess(Bid bid, float auctioPrice) {
         Logger.d(TAG, "onSuccess");
         renderAd(bid);
     }
