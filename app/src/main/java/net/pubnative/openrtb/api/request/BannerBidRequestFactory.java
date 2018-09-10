@@ -13,7 +13,7 @@ import java.util.UUID;
 
 public class BannerBidRequestFactory {
 
-    public BidRequest createBidRequest(App app, Device device, User user) {
+    public BidRequest createBidRequest(App app, Device device, User user, float bidFloor) {
         BidRequest bidRequest = new BidRequest();
 
         bidRequest.id = UUID.randomUUID().toString();
@@ -24,9 +24,8 @@ public class BannerBidRequestFactory {
         banner.w = 300;
         banner.h = 250;
         imp.banner = banner;
-        // TODO should this be zone id?
         imp.tagid = "1";
-        imp.bidfloor = 0.01f;
+        imp.bidfloor = bidFloor;
         imp.bidfloorcur = "USD";
         imp.secure = 1;
         bidRequest.imp = new ArrayList<>(1);

@@ -4,19 +4,34 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.Toast;
 
 import net.pubnative.openrtb.R;
+import net.pubnative.openrtb.api.Macros;
 import net.pubnative.openrtb.api.response.models.Bid;
 import net.pubnative.openrtb.managers.Auction;
+import net.pubnative.openrtb.mraid.MRAIDBanner;
+import net.pubnative.openrtb.mraid.MRAIDNativeFeature;
+import net.pubnative.openrtb.mraid.MRAIDNativeFeatureListener;
+import net.pubnative.openrtb.mraid.MRAIDView;
+import net.pubnative.openrtb.mraid.MRAIDViewListener;
+import net.pubnative.openrtb.utils.Logger;
+import net.pubnative.openrtb.utils.UrlHandler;
+import net.pubnative.openrtb.utils.text.StringEscapeUtils;
 
 /**
  * A placeholder fragment containing a simple view.
  */
-public class MainFragment extends Fragment implements Auction.AuctionListener {
+public class MainFragment extends Fragment implements Auction.AuctionListener, MRAIDViewListener, MRAIDNativeFeatureListener {
     private static final String TAG = MainFragment.class.getSimpleName();
+
+    private FrameLayout mAdContainer;
+    private UrlHandler mUrlHandler;
 
     public MainFragment() {
     }
@@ -31,16 +46,15 @@ public class MainFragment extends Fragment implements Auction.AuctionListener {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        view.findViewById(R.id.button_request).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                doRequest();
-            }
-        });
+        view.findViewById(R.id.button_request).setOnClickListener(v -> doRequest());
+
+        mAdContainer = view.findViewById(R.id.ad_container);
+
+        mUrlHandler = new UrlHandler(getActivity());
     }
 
     private void doRequest() {
-        Auction auction = new Auction(this);
+        Auction auction = new Auction(getActivity(), this);
         auction.start();
     }
 
@@ -48,11 +62,83 @@ public class MainFragment extends Fragment implements Auction.AuctionListener {
     // Auction callback
     @Override
     public void onSuccess(Bid bid) {
-
+        Logger.d(TAG, "onSuccess");
+        renderAd(bid);
     }
 
     @Override
     public void onFailed(Throwable throwable) {
+        Logger.e(TAG, "onFailed: ", throwable);
+        Toast.makeText(getActivity(), throwable.getMessage(), Toast.LENGTH_SHORT).show();
+    }
+
+    private void renderAd(Bid bid) {
+        mAdContainer.removeAllViews();
+        if (TextUtils.isEmpty(bid.adm)) {
+            Toast.makeText(getActivity(), "The received bid contains no ad creative", Toast.LENGTH_SHORT).show();
+        } else {
+            String escapedAd = bid.adm.replace(Macros.AUCTION_PRICE, String.valueOf(bid.price));
+            escapedAd = StringEscapeUtils.unescapeJava(escapedAd);
+            String[] supportedFeatures = new String[] {
+                    MRAIDNativeFeature.CALENDAR,
+                    MRAIDNativeFeature.INLINE_VIDEO,
+                    MRAIDNativeFeature.SMS,
+                    MRAIDNativeFeature.STORE_PICTURE,
+                    MRAIDNativeFeature.TEL
+            };
+
+            MRAIDBanner banner = new MRAIDBanner(getActivity(), "", escapedAd, supportedFeatures, this, this);
+            mAdContainer.addView(banner);
+        }
+    }
+
+    @Override
+    public void mraidViewLoaded(MRAIDView mraidView) {
+
+    }
+
+    @Override
+    public boolean mraidViewResize(MRAIDView mraidView, int width, int height, int offsetX, int offsetY) {
+        return true;
+    }
+
+    @Override
+    public void mraidViewExpand(MRAIDView mraidView) {
+
+    }
+
+    @Override
+    public void mraidViewClose(MRAIDView mraidView) {
+
+    }
+
+    @Override
+    public void mraidNativeFeatureCallTel(String url) {
+
+    }
+
+    @Override
+    public void mraidNativeFeatureCreateCalendarEvent(String eventJSON) {
+
+    }
+
+    @Override
+    public void mraidNativeFeatureOpenBrowser(String url) {
+        mUrlHandler.handleUrl(url);
+    }
+
+    @Override
+    public void mraidNativeFeaturePlayVideo(String url) {
+
+    }
+
+    @Override
+    public void mraidNativeFeatureSendSms(String url) {
+
+    }
+
+    @Override
+    public void mraidNativeFeatureStorePicture(String url) {
 
     }
 }

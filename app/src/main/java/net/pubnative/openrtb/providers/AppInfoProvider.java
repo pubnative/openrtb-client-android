@@ -33,6 +33,7 @@ public class AppInfoProvider {
         return app;
     }
 
+    // Hardcoded for now. Should come from config
     private String getExchangeAppId() {
         return "100110011";
     }
