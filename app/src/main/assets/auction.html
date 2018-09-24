@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>OpenRTB client</title>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"
+            integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+            crossorigin="anonymous"></script>
+    <script>
+        function calculateAuctionPrice(bid) {
+            return bid.price;
+        }
+
+        function makeRequest(url) {
+            console.log("performing request: " + url);
+            fetch(url).then(data => {
+                return data.json();
+            }).then(res => {
+                console.log(res);
+            }).catch(error => {
+                console.log(error);
+            });
+
+        }
+
+        function notifyWinner(winner, auctionPrice) {
+            if (winner.nurl && winner.nurl !== "") {
+                let winUrl = winner.nurl;
+                makeRequest(winUrl);
+            } else {
+                console.log("Winning bid has no win notice URL. Dropping call");
+            }
+        }
+
+        function notifyLosers(losers, auctionPrice) {
+            if (losers) {
+                for (let loser of losers) {
+                    if (loser.lurl && loser.lurl !== "") {
+                        let lossUrl = loser.lurl;
+                        makeRequest(lossUrl);
+                    } else {
+                        console.log("Winning bid has no loss notice URL. Dropping call");
+                    }
+                }
+            }
+        }
+
+        function performAuction(responses) {
+            var winningBid = 0;
+            var winner;
+            let losers = [];
+
+            for (let response of responses) {
+                for (let seatBid of response.seatbid) {
+                    for (let bid of seatBid.bid) {
+                        if (bid.price > winningBid) {
+                            winningBid = bid.price;
+
+                            if (winner) {
+                                losers.push(winner);
+                            }
+
+                            winner = bid;
+                        }
+                    }
+                }
+            }
+
+            if (winner) {
+                let auctionPrice = calculateAuctionPrice(winner);
+
+                OpenRTBBridge.notifySuccess(JSON.stringify(winner), auctionPrice);
+
+                notifyWinner(winner, auctionPrice);
+                notifyLosers(losers, auctionPrice);
+            } else {
+                OpenRTBBridge.notifyFailure("No bid");
+            }
+        }
+
+        const endpoints = [
+            "http://dsp.pubnative.net/bid/v1/request?apptoken=dde3c298b47648459f8ada4a982fa92d&zoneid=2",
+            "http://dsp.pubnative.net/bid/v1/request?apptoken=dde3c298b47648459f8ada4a982fa92d&zoneid=7"
+        ];
+
+        const sampleRequest = {
+            "id": "92d6421e44a44dff9f05b29be0ca5bef",
+            "imp": [
+                {
+                    "id": "94628ee5-fe99-436d-94b5-f3270ad06529",
+                    "banner": {
+                        "w": 300,
+                        "h": 250
+                    },
+                    "tagid": "1",
+                    "bidfloor": 0.01,
+                    "bidfloorcurdan": "USD",
+                    "secure": 1
+                }
+            ],
+            "app": {
+                "id": "1008118",
+                "name": "Test_Android",
+                "bundle": "com.android.test",
+                "cat": [
+                    "IAB2-1",
+                    "IAB2-2"
+                ],
+                "storeurl": "https://play.google.com/store/apps/details?id=com.android.test",
+                "keywords": "test, android",
+                "privacypolicy": 1,
+                "publisher": {
+                    "id": "pub12345",
+                    "name": "Publisher A"
+                }
+            },
+            "device": {
+                "ua": "Dalvik/2.1.0 (Linux; U; Android 6.0; MotoG3 Build/MPI24.65-25)",
+                "ip": "107.219.186.28",
+                "geo": {
+                    "lat": 33.9775,
+                    "lon": -118.2133,
+                    "country": "USA",
+                    "region": "CA",
+                    "city": "los angeles",
+                    "zip": "90001",
+                    "type": 1
+                },
+                "carrier": "att internet services",
+                "language": "en",
+                "model": "Moto G3",
+                "os": "Android",
+                "osv": "6.0",
+                "connectiontype": 2,
+                "devicetype": 1,
+                "ifa": "03F9F0E4-937D-4F85-9275-F530E0107B2F"
+            },
+            "user": {
+                "id": "50cf7979-18a7-51dd-9645-091009ad842f"
+            },
+            "at": 2,
+            "tmax": 100,
+            "allimps": 0,
+            "cur": [
+                "USD"
+            ],
+            "bcat": [
+                "IAB24",
+                "IAB25",
+                "IAB26"
+            ]
+        };
+
+        function makeRTBRequest(url, request) {
+            return $.getJSON(url, function (data) {
+
+            });
+        }
+
+        function performRequests() {
+            const responses = [];
+            $.when(
+                $.post(endpoints[0], JSON.stringify(sampleRequest)),
+                $.post(endpoints[1], JSON.stringify(sampleRequest))
+            ).then(function (res1, res2) {
+                if (res1[0] && res1[0].seatbid) {
+                    responses.push(res1[0]);
+                } else {
+                    console.log("No response received for network 1");
+                }
+                if (res2[0] && res2[0].seatbid) {
+                    responses.push(res2[0]);
+                } else {
+                    console.log("No response received for network 2");
+                }
+                performAuction(responses)
+            });
+        }
+
+
+    </script>
+</head>
+<body>
+<script>
+    performRequests();
+
+</script>
+</body>
+</html>
