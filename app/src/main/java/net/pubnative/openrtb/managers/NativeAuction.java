@@ -18,8 +18,6 @@ import net.pubnative.openrtb.providers.UserInfoProvider;
 import net.pubnative.openrtb.utils.HttpRequest;
 import net.pubnative.openrtb.utils.Logger;
 import net.pubnative.openrtb.utils.text.StringEscapeUtils;
-import net.pubnative.openrtb.webservice.PNRTBService;
-import net.pubnative.openrtb.webservice.ServiceProvider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,48 +29,14 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 
-public class Auction {
-    private static final String TAG = Auction.class.getSimpleName();
+public class NativeAuction extends AbstractAuction {
+    private static final String TAG = NativeAuction.class.getSimpleName();
 
-    public interface AuctionListener {
-        void onSuccess(Bid bid, float auctionPrice);
-
-        void onFailed(Throwable throwable);
+    public NativeAuction(Context context, AuctionListener listener) {
+        super(context, listener);
     }
 
-    private final AppInfoProvider mAppInfoProvider;
-    private final DeviceInfoProvider mDeviceInfoProvider;
-    private final UserInfoProvider mUserInfoProvider;
-
-    private final AuctionListener mListener;
-    private final Context mContext;
-
-    public Auction(Context context, AuctionListener listener) {
-        this(context,
-                listener,
-                OpenRTB.getAppInfoProvider(),
-                OpenRTB.getDeviceInfoProvider(),
-                OpenRTB.getUserInfoProvider());
-    }
-
-    public Auction(Context context, AuctionListener listener,
-                   AppInfoProvider appInfoProvider,
-                   DeviceInfoProvider deviceInfoProvider,
-                   UserInfoProvider userInfoProvider) {
-        this.mContext = context;
-        this.mListener = listener;
-        this.mAppInfoProvider = appInfoProvider;
-        this.mDeviceInfoProvider = deviceInfoProvider;
-        this.mUserInfoProvider = userInfoProvider;
-    }
-
-    private BidRequest createBidRequest(float bidFloor) {
-        return new BannerBidRequestFactory().createBidRequest(
-                mAppInfoProvider.getApp(),
-                mDeviceInfoProvider.getDevice(),
-                mUserInfoProvider.getUser(), bidFloor);
-    }
-
+    @Override
     public void start(float bidFloor) {
         BidRequest bidRequest = createBidRequest(bidFloor);
 

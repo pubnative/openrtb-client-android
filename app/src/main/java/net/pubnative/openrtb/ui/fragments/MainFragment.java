@@ -14,7 +14,8 @@ import android.widget.Toast;
 import net.pubnative.openrtb.R;
 import net.pubnative.openrtb.api.Macros;
 import net.pubnative.openrtb.api.response.models.Bid;
-import net.pubnative.openrtb.managers.Auction;
+import net.pubnative.openrtb.managers.Bidder;
+import net.pubnative.openrtb.managers.WebAuction;
 import net.pubnative.openrtb.mraid.MRAIDBanner;
 import net.pubnative.openrtb.mraid.MRAIDNativeFeature;
 import net.pubnative.openrtb.mraid.MRAIDNativeFeatureListener;
@@ -27,7 +28,7 @@ import net.pubnative.openrtb.utils.text.StringEscapeUtils;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class MainFragment extends Fragment implements Auction.AuctionListener, MRAIDViewListener, MRAIDNativeFeatureListener {
+public class MainFragment extends Fragment implements Bidder.AuctionListener, MRAIDViewListener, MRAIDNativeFeatureListener {
     private static final String TAG = MainFragment.class.getSimpleName();
 
     private FrameLayout mAdContainer;
@@ -54,8 +55,11 @@ public class MainFragment extends Fragment implements Auction.AuctionListener, M
     }
 
     private void doRequest() {
-        Auction auction = new Auction(getActivity(), this);
-        auction.start(0.01f);
+        getAuction().start(0.01f);
+    }
+
+    private Bidder getAuction() {
+        return new WebAuction(getActivity(), this);
     }
 
 
@@ -63,7 +67,7 @@ public class MainFragment extends Fragment implements Auction.AuctionListener, M
     @Override
     public void onSuccess(Bid bid, float auctioPrice) {
         Logger.d(TAG, "onSuccess");
-        renderAd(bid);
+        getActivity().runOnUiThread(() -> renderAd(bid));
     }
 
     @Override
