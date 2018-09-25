@@ -4,7 +4,10 @@ import android.text.TextUtils;
 import android.webkit.JavascriptInterface;
 
 import net.pubnative.openrtb.api.response.models.Bid;
+import net.pubnative.openrtb.api.response.models.BidResponse;
 import net.pubnative.openrtb.utils.StringUtils;
+
+import java.util.List;
 
 public class WebAuctionInterface {
     public interface Listener {
@@ -13,15 +16,15 @@ public class WebAuctionInterface {
     }
 
     private final Listener mListener;
-    private final String mRequestJson;
+    private final String mResponsesJson;
 
-    public WebAuctionInterface(String requestJson, Listener listener) {
+    public WebAuctionInterface(List<BidResponse> responses, Listener listener) {
         this.mListener = listener;
-        this.mRequestJson = requestJson;
+        this.mResponsesJson = StringUtils.convertObjectsToJson(responses);
     }
 
     @JavascriptInterface
-    public void notifySuccess(String winningBid, float auctionPrice) {
+    public void notifySuccess(String winningBid, String losers, float auctionPrice) {
         if (!TextUtils.isEmpty(winningBid)) {
             Bid bid = StringUtils.convertStringToObject(winningBid, Bid.class);
             if (bid != null && mListener != null) {
@@ -46,7 +49,7 @@ public class WebAuctionInterface {
     }
 
     @JavascriptInterface
-    public String getBidRequestJson() {
-        return mRequestJson;
+    public String getResponses() {
+        return mResponsesJson;
     }
 }
