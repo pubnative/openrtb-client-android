@@ -7,16 +7,18 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import net.pubnative.openrtb.OpenRTB;
-import net.pubnative.openrtb.api.request.models.BidRequest;
 import net.pubnative.openrtb.api.response.models.Bid;
+import net.pubnative.openrtb.models.AuctionResponse;
 import net.pubnative.openrtb.providers.AppInfoProvider;
 import net.pubnative.openrtb.providers.DeviceInfoProvider;
 import net.pubnative.openrtb.providers.UserInfoProvider;
-import net.pubnative.openrtb.utils.StringUtils;
 import net.pubnative.openrtb.webinterface.WebAuctionInterface;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class WebAuction extends AbstractAuction implements WebAuctionInterface.Listener {
-    private static final String TAG = NativeAuction.class.getSimpleName();
+    private static final String TAG = WebAuction.class.getSimpleName();
 
     private final WebView mAuctionContainer;
 
@@ -29,33 +31,36 @@ public class WebAuction extends AbstractAuction implements WebAuctionInterface.L
     }
 
     public WebAuction(Context context, AuctionListener listener,
-                         AppInfoProvider appInfoProvider,
-                         DeviceInfoProvider deviceInfoProvider,
-                         UserInfoProvider userInfoProvider) {
+                      AppInfoProvider appInfoProvider,
+                      DeviceInfoProvider deviceInfoProvider,
+                      UserInfoProvider userInfoProvider) {
         super(context, listener, appInfoProvider, deviceInfoProvider, userInfoProvider);
         this.mAuctionContainer = new WebView(context);
     }
 
     @Override
-    public void start(float bidFloor) {
-        BidRequest bidRequest = createBidRequest(bidFloor);
-        String requestJson = StringUtils.convertObjectToJson(bidRequest);
+    protected void doAuction(AuctionResponse response) {
+        if (response != null && !response.getList().isEmpty()) {
+            mAuctionContainer.getSettings().setJavaScriptEnabled(true);
+            mAuctionContainer.addJavascriptInterface(new WebAuctionInterface(response.getList(), this), "OpenRTBBridge");
+            mAuctionContainer.setWebChromeClient(chromeClient);
+            mAuctionContainer.setWebViewClient(webViewClient);
 
-        mAuctionContainer.getSettings().setJavaScriptEnabled(true);
-        mAuctionContainer.addJavascriptInterface(new WebAuctionInterface(requestJson, this), "OpenRTBBridge");
-        mAuctionContainer.setWebChromeClient(chromeClient);
-        mAuctionContainer.setWebViewClient(webViewClient);
-
-        mAuctionContainer.loadUrl("file:///android_asset/auction.html");
+            mAuctionContainer.loadUrl("file:///android_asset/auction.html");
+        } else {
+            if (mListener != null) {
+                mListener.onFailed(new Exception("No bid"));
+            }
+        }
     }
 
     @Override
-    public void onSuccess(Bid bid, float auctionPrice) {
-        if (mListener != null) {
-            if (bid != null) {
-                mListener.onSuccess(bid, auctionPrice);
-            } else {
-                mListener.onFailed(new Exception("Invalid bid returned"));
+    public void onSuccess(Bid bid, List<Bid> losers, float auctionPrice) {
+        if (bid != null) {
+            notifySuccess(bid, losers, auctionPrice);
+        } else {
+            if (mListener != null) {
+                mListener.onFailed(new Exception("No bid"));
             }
         }
     }
@@ -80,4 +85,9 @@ public class WebAuction extends AbstractAuction implements WebAuctionInterface.L
             super.onPageFinished(view, url);
         }
     };
+
+    @Override
+    protected String getTag() {
+        return TAG;
+    }
 }

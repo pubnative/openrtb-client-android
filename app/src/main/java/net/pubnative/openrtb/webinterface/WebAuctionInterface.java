@@ -11,7 +11,7 @@ import java.util.List;
 
 public class WebAuctionInterface {
     public interface Listener {
-        void onSuccess(Bid bid, float auctionPrice);
+        void onSuccess(Bid bid, List<Bid> loser, float auctionPrice);
         void onFailure(Throwable error);
     }
 
@@ -27,8 +27,14 @@ public class WebAuctionInterface {
     public void notifySuccess(String winningBid, String losers, float auctionPrice) {
         if (!TextUtils.isEmpty(winningBid)) {
             Bid bid = StringUtils.convertStringToObject(winningBid, Bid.class);
+
+            List<Bid> losersList = null;
+            if (!TextUtils.isEmpty(losers)) {
+                losersList = StringUtils.convertStringToObjects(losers, Bid.class);
+            }
+
             if (bid != null && mListener != null) {
-                mListener.onSuccess(bid, auctionPrice);
+                mListener.onSuccess(bid, losersList, auctionPrice);
             }
         } else {
             notifyFailure("No winning bid was received");
