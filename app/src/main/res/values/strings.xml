@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">OpenRTBClient</string>
     <string name="action_settings">Settings</string>
+
+    <string name="auction_type">Auction type:</string>
+    <string name="auction_native">Native</string>
+    <string name="auction_web">Web</string>
 </resources>

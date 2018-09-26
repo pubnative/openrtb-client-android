@@ -15,6 +15,7 @@ import net.pubnative.openrtb.R;
 import net.pubnative.openrtb.api.Macros;
 import net.pubnative.openrtb.api.response.models.Bid;
 import net.pubnative.openrtb.managers.Bidder;
+import net.pubnative.openrtb.managers.NativeAuction;
 import net.pubnative.openrtb.managers.WebAuction;
 import net.pubnative.openrtb.mraid.MRAIDBanner;
 import net.pubnative.openrtb.mraid.MRAIDNativeFeature;
@@ -47,18 +48,28 @@ public class MainFragment extends Fragment implements Bidder.AuctionListener, MR
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        view.findViewById(R.id.button_request).setOnClickListener(v -> doRequest());
+        view.findViewById(R.id.button_request_native).setOnClickListener(v -> doNativeRequest());
+
+        view.findViewById(R.id.button_request_web).setOnClickListener(v -> doWebRequest());
 
         mAdContainer = view.findViewById(R.id.ad_container);
 
         mUrlHandler = new UrlHandler(getActivity());
     }
 
-    private void doRequest() {
-        getAuction().start(0.01f);
+    private void doNativeRequest() {
+        getNativeAuction().start(0.01f);
     }
 
-    private Bidder getAuction() {
+    private void doWebRequest() {
+        getWebAuction().start(0.01f);
+    }
+
+    private Bidder getNativeAuction() {
+        return new NativeAuction(getActivity(), this);
+    }
+
+    private Bidder getWebAuction() {
         return new WebAuction(getActivity(), this);
     }
 
@@ -83,7 +94,7 @@ public class MainFragment extends Fragment implements Bidder.AuctionListener, MR
         } else {
             String escapedAd = bid.adm.replace(Macros.AUCTION_PRICE, String.valueOf(bid.price));
             escapedAd = StringEscapeUtils.unescapeJava(escapedAd);
-            String[] supportedFeatures = new String[] {
+            String[] supportedFeatures = new String[]{
                     MRAIDNativeFeature.CALENDAR,
                     MRAIDNativeFeature.INLINE_VIDEO,
                     MRAIDNativeFeature.SMS,
